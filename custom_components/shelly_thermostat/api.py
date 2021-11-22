@@ -33,6 +33,9 @@ class ShellyApiClient:
         )
         result["status"] = status
         result["temperature"] = float(status.get("ext_temperature").get("0").get("tC"))
+        result["output"] = status.get("relays")[0].get("ison")
+        result["mac"] = status.get("mac")
+
         settings = await self.api_wrapper(
             "get",
             f"http://{self._host}/settings",
@@ -57,6 +60,7 @@ class ShellyApiClient:
 
         result["name"] = settings.get("name")
         result["model"] = settings.get("device").get("type")
+
         return result
 
     """

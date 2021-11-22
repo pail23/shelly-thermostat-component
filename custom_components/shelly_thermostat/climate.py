@@ -2,12 +2,19 @@
 from homeassistant.components.climate import (
     ClimateEntity,
     ClimateEntityDescription,
+    TEMP_CELSIUS,
+    ATTR_TEMPERATURE,
+)
+
+from homeassistant.components.climate.const import (
     HVAC_MODE_OFF,
     HVAC_MODE_HEAT,
     HVAC_MODE_COOL,
-    TEMP_CELSIUS,
+    CURRENT_HVAC_HEAT,
+    CURRENT_HVAC_COOL,
+    CURRENT_HVAC_IDLE,
+    CURRENT_HVAC_OFF,
     SUPPORT_TARGET_TEMPERATURE,
-    ATTR_TEMPERATURE,
 )
 
 from .const import DOMAIN
@@ -24,7 +31,15 @@ async def async_setup_entry(hass, entry, async_add_devices):
 
 
 class ShellyThermostatClimate(ShellyThermostatEntity, ClimateEntity):
-    """integration_blueprint Sensor class."""
+    """Shelly Thermostat climate class."""
+
+    _attr_hvac_modes = [HVAC_MODE_HEAT, HVAC_MODE_COOL, HVAC_MODE_OFF]
+    _attr_temperature_unit = TEMP_CELSIUS
+    _attr_supported_features = SUPPORT_TARGET_TEMPERATURE
+    _attr_max_temp = 35
+    _attr_min_temp = 5
+    _attr_target_temperature_step = 0.1
+    _attr_icon = "mdi:thermostat"
 
     def __init__(
         self,
@@ -34,12 +49,7 @@ class ShellyThermostatClimate(ShellyThermostatEntity, ClimateEntity):
     ):
         """Initialize the climate."""
         self.entity_description = description
-        self._attr_hvac_modes = [HVAC_MODE_HEAT, HVAC_MODE_COOL, HVAC_MODE_OFF]
-        self._attr_temperature_unit = TEMP_CELSIUS
-        self._attr_supported_features = SUPPORT_TARGET_TEMPERATURE
-        self._attr_max_temp = 35
-        self._attr_min_temp = 5
-        self._attr_target_temperature_step = 0.1
+
         super().__init__(coordinator, config_entry)
 
     @property
@@ -66,6 +76,18 @@ class ShellyThermostatClimate(ShellyThermostatEntity, ClimateEntity):
         elif mode == "off":
             return HVAC_MODE_OFF
         return None
+
+    @property
+    def hvac_action(self) -> str:
+        """HVAC current action."""
+        output = self.coordinator.data.get("output")
+        mode = self.coordinator.data.get("hvac_mode")
+        if mode == "heat":
+            return CURRENT_HVAC_HEAT if output else CURRENT_HVAC_IDLE
+        elif mode == "cool":
+            return CURRENT_HVAC_COOL if output else CURRENT_HVAC_IDLE
+        else:
+            return CURRENT_HVAC_OFF
 
     async def async_set_hvac_mode(self, hvac_mode: str) -> None:
         """Set new target hvac mode."""

@@ -13,7 +13,7 @@ class ShellyThermostatEntity(CoordinatorEntity):
     @property
     def unique_id(self):
         """Return a unique ID to use for this entity."""
-        return self.config_entry.entry_id
+        return self.coordinator.data.get("mac")
 
     @property
     def device_info(self):
