@@ -1,8 +1,10 @@
 """Climate platform for shelly_thermostat."""
+
+from homeassistant.const import UnitOfTemperature
+
 from homeassistant.components.climate import (
     ClimateEntity,
     ClimateEntityDescription,
-    TEMP_CELSIUS,
     ATTR_TEMPERATURE,
 )
 
@@ -34,7 +36,7 @@ class ShellyThermostatClimate(ShellyThermostatEntity, ClimateEntity):
     """Shelly Thermostat climate class."""
 
     _attr_hvac_modes = [HVAC_MODE_HEAT, HVAC_MODE_COOL, HVAC_MODE_OFF]
-    _attr_temperature_unit = TEMP_CELSIUS
+    _attr_temperature_unit = UnitOfTemperature.CELSIUS 
     _attr_supported_features = SUPPORT_TARGET_TEMPERATURE
     _attr_max_temp = 35
     _attr_min_temp = 5
