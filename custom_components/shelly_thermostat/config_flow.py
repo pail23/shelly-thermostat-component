@@ -1,25 +1,22 @@
 """Adds config flow for Shelly Thermostat."""
+
 import ipaddress
 import re
 from homeassistant import config_entries
 from homeassistant.core import callback
-from homeassistant.helpers.aiohttp_client import async_create_clientsession
 import voluptuous as vol
 from homeassistant.const import CONF_HOST, CONF_SCAN_INTERVAL
 
-from .api import ShellyApiClient
 from .const import (
     DEFAULT_SCAN_INTERVAL,
     DEFAULT_HOST_NAME,
     DOMAIN,
-    PLATFORMS,
 )
-from homeassistant.core import HomeAssistant, callback
+from homeassistant.core import HomeAssistant
 
 DATA_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_HOST): str,
-        vol.Optional(CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL): int,
     }
 )
 
@@ -83,7 +80,6 @@ class ShellyThermostatFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         user_input = {}
         # Provide defaults for form
         user_input[CONF_HOST] = DEFAULT_HOST_NAME
-        user_input[CONF_SCAN_INTERVAL] = DEFAULT_SCAN_INTERVAL
         return await self._show_config_form(user_input)
 
     async def _show_config_form(self, user_input):  # pylint: disable=unused-argument
@@ -93,9 +89,6 @@ class ShellyThermostatFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             data_schema=vol.Schema(
                 {
                     vol.Required(CONF_HOST, default=user_input[CONF_HOST]): str,
-                    vol.Optional(
-                        CONF_SCAN_INTERVAL, default=user_input[CONF_SCAN_INTERVAL]
-                    ): int,
                 }
             ),
             errors=self._errors,

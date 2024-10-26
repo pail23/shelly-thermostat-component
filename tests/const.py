@@ -1,4 +1,5 @@
 """Constants for integration_blueprint tests."""
+
 from homeassistant.const import CONF_HOST, CONF_SCAN_INTERVAL
 
 # Mock config data to be used across multiple tests

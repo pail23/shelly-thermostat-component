@@ -1,0 +1,15 @@
+[project]
+name = "shelly-thermostat-component"
+version = "0.1.0"
+description = "Home assistant component to set the shelly thermostat"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "homeassistant>=2024.10.4",
+    "pytest-homeassistant-custom-component>=0.13.175",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.7.1",
+]

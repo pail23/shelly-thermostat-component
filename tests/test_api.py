@@ -1,4 +1,5 @@
 """Tests for integration_blueprint api."""
+
 import asyncio
 
 import aiohttp

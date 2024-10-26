@@ -4,126 +4,64 @@ Custom integration to integrate shelly_thermostat with Home Assistant.
 For more details about this integration, please refer to
 https://github.com/pail23/shelly-thermostat-component
 """
-import asyncio
-from datetime import timedelta
-import logging
 
-import voluptuous as vol
-import homeassistant.helpers.config_validation as cv
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import Config, HomeAssistant
-from homeassistant.const import CONF_HOST, CONF_SCAN_INTERVAL
-from homeassistant.exceptions import ConfigEntryNotReady
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+from .coordinator import ShellyDataUpdateCoordinator
+from .data import ShellyThermostatData
+from homeassistant.core import HomeAssistant
+from homeassistant.const import CONF_HOST
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from homeassistant.loader import async_get_loaded_integration
 
 from .api import ShellyApiClient
 
-from .const import (
-    DEFAULT_SCAN_INTERVAL,
-    DOMAIN,
-    PLATFORMS,
-    STARTUP_MESSAGE,
-)
+from .const import PLATFORMS
 
-SCAN_INTERVAL = timedelta(seconds=30)
+if TYPE_CHECKING:
+    from homeassistant.core import HomeAssistant
 
-_LOGGER: logging.Logger = logging.getLogger(__package__)
-
-SHELLY_THERMOSTAT_SCHEMA = vol.Schema(
-    {
-        vol.Required(CONF_HOST): cv.string,
-        vol.Optional(
-            CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL
-        ): cv.positive_int,
-    }
-)
-
-CONFIG_SCHEMA = vol.Schema(
-    {DOMAIN: vol.Schema({cv.slug: SHELLY_THERMOSTAT_SCHEMA})}, extra=vol.ALLOW_EXTRA
-)
+    from .data import ShellyThermostatConfigEntry
 
 
-async def async_setup(hass: HomeAssistant, config: Config):
-    """Set up this integration using YAML is not supported."""
-    return True
-
-
-async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
+async def async_setup_entry(
+    hass: HomeAssistant,
+    entry: ShellyThermostatConfigEntry,
+) -> bool:
     """Set up this integration using UI."""
-    if hass.data.get(DOMAIN) is None:
-        hass.data.setdefault(DOMAIN, {})
-        _LOGGER.info(STARTUP_MESSAGE)
+    coordinator = ShellyDataUpdateCoordinator(hass)
+    entry.runtime_data = ShellyThermostatData(
+        client=ShellyApiClient(
+            entry.data[CONF_HOST],
+            session=async_get_clientsession(hass),
+        ),
+        integration=async_get_loaded_integration(hass, entry.domain),
+        coordinator=coordinator,
+    )
 
-    host = entry.data.get(CONF_HOST)
+    # https://developers.home-assistant.io/docs/integration_fetching_data#coordinated-single-api-poll-for-data-for-all-entities
+    await coordinator.async_config_entry_first_refresh()
 
-    session = async_get_clientsession(hass)
-    client = ShellyApiClient(host, session)
+    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    entry.async_on_unload(entry.add_update_listener(async_reload_entry))
 
-    coordinator = ShellyDataUpdateCoordinator(hass, client=client)
-    await coordinator.async_refresh()
-
-    if not coordinator.last_update_success:
-        raise ConfigEntryNotReady
-
-    hass.data[DOMAIN][entry.entry_id] = coordinator
-
-    for platform in PLATFORMS:
-        if entry.options.get(platform, True):
-            coordinator.platforms.append(platform)
-            hass.async_add_job(
-                hass.config_entries.async_forward_entry_setup(entry, platform)
-            )
-
-    entry.add_update_listener(async_reload_entry)
     return True
 
 
-class ShellyDataUpdateCoordinator(DataUpdateCoordinator):
-    """Class to manage fetching data from the API."""
-
-    def __init__(self, hass: HomeAssistant, client: ShellyApiClient) -> None:
-        """Initialize."""
-        self.api = client
-        self.platforms = []
-
-        super().__init__(hass, _LOGGER, name=DOMAIN, update_interval=SCAN_INTERVAL)
-
-    async def _async_update_data(self):
-        """Update data via library."""
-        try:
-            return await self.api.async_get_data()
-        except Exception as exception:
-            raise UpdateFailed() from exception
-
-    async def async_set_target_temperature(self, target_temperature: float) -> None:
-        await self.api.async_set_target_temperature(target_temperature)
-        await self.async_request_refresh()
-
-    async def async_set_hvac_mode(self, mode: str) -> None:
-        await self.api.async_set_hvac_mode(mode)
-        await self.async_request_refresh()
-
-
-async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+async def async_unload_entry(
+    hass: HomeAssistant,
+    entry: ShellyThermostatConfigEntry,
+) -> bool:
     """Handle removal of an entry."""
-    coordinator = hass.data[DOMAIN][entry.entry_id]
-    unloaded = all(
-        await asyncio.gather(
-            *[
-                hass.config_entries.async_forward_entry_unload(entry, platform)
-                for platform in PLATFORMS
-                if platform in coordinator.platforms
-            ]
-        )
-    )
-    if unloaded:
-        hass.data[DOMAIN].pop(entry.entry_id)
-
-    return unloaded
+    return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
 
 
-async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
+async def async_reload_entry(
+    hass: HomeAssistant,
+    entry: ShellyThermostatConfigEntry,
+) -> None:
     """Reload config entry."""
     await async_unload_entry(hass, entry)
     await async_setup_entry(hass, entry)

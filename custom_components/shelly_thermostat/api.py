@@ -1,11 +1,10 @@
 """Sample API Client."""
+
 import logging
 import asyncio
 import socket
-from typing import Optional
 import aiohttp
 import async_timeout
-from voluptuous.validators import Boolean
 
 TIMEOUT = 10
 RELAY_ON = "relay_on"
@@ -17,6 +16,10 @@ HVAC_MODE_COOL = "cool"
 HVAC_MODE_OFF = "off"
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
+
+
+class ShellyThermostatApiClientError(Exception):
+    """Exception to indicate a general API error."""
 
 
 class ShellyApiClient:
