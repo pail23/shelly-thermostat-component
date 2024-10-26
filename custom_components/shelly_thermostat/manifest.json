@@ -1,12 +1,12 @@
 {
   "domain": "shelly_thermostat",
   "name": "Shelly Thermostat",
+  "codeowners": [
+    "@pail23"
+  ],
+  "config_flow": true,
   "documentation": "https://github.com/pail23/shelly-thermostat-component",
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/pail23/shelly-thermostat-component/issues",
-  "version": "0.0.0",
-  "config_flow": true,
-  "codeowners": [
-    "@pail23"
-  ]
+  "version": "0.0.0"
 }
