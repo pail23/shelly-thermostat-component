@@ -1,9 +1,7 @@
 {
     "name": "Shelly Thermostat",
-    "hacs": "1.6.0",
-    "domains": [
-        "climate"
-    ],
-    "homeassistant": "2021.10.0",
-    "iot_class": "local_polling"
+    "filename": "shelly_thermostat.zip",
+    "homeassistant": "2024.9.0",
+    "render_readme": true,
+    "zip_release": true
 }
