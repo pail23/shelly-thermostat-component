@@ -5,10 +5,9 @@ import re
 from homeassistant import config_entries
 from homeassistant.core import callback
 import voluptuous as vol
-from homeassistant.const import CONF_HOST, CONF_SCAN_INTERVAL
+from homeassistant.const import CONF_HOST
 
 from .const import (
-    DEFAULT_SCAN_INTERVAL,
     DEFAULT_HOST_NAME,
     DOMAIN,
 )

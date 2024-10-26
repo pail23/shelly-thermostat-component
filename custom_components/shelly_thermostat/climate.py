@@ -15,7 +15,6 @@ from homeassistant.components.climate import (
 
 from homeassistant.components.climate.const import HVACMode, HVACAction
 
-from .const import DOMAIN
 from .entity import ShellyThermostatEntity
 
 
